@@ -1189,3 +1189,62 @@ def test_checkout_at_an_explicit_time(client, tokens):
         "userId": athlete_id, "branchId": branch["id"]}))
     assert client.put(f"{API}/check-ins/{second['id']}/checkout",
                       headers=tokens["ADH"], json={}).status_code == 200
+
+
+def test_coach_can_create_athlete_only(client, tokens):
+    created = _data(client.post(f"{API}/users", headers=tokens["COH"], json={
+        "email": f"coach-ath-{uuid4().hex[:8]}@x.ir",
+        "password": "initial123",
+        "firstName": "New",
+        "lastName": "Athlete",
+        "role": "athlete",
+    }))
+    assert created["role"] == "athlete"
+
+    # Coach cannot create non-athlete accounts.
+    for role in ("admin", "coach", "receptionist"):
+        r = client.post(f"{API}/users", headers=tokens["COH"], json={
+            "email": f"coach-{role}-{uuid4().hex[:8]}@x.ir",
+            "password": "initial123",
+            "firstName": "No",
+            "lastName": "Way",
+            "role": role,
+        })
+        assert r.status_code == 403, f"coach should not create {role}: {r.text}"
+
+
+def test_club_settings_persistence_and_rbac(client, tokens):
+    initial = _data(client.get(f"{API}/settings", headers=tokens["ADH"]))
+    assert "clubName" in initial and "workHours" in initial
+
+    # Coach and athlete cannot update club settings.
+    assert client.put(f"{API}/settings", headers=tokens["COH"],
+                      json={"clubName": "Hacked"}).status_code == 403
+    assert client.put(f"{API}/settings", headers=tokens["AH"],
+                      json={"clubName": "Hacked"}).status_code == 403
+
+    updated = _data(client.put(f"{API}/settings", headers=tokens["ADH"], json={
+        "clubName": "باشگاه لومی ولنس",
+        "workHours": "۰۷:۰۰ تا ۲۲:۰۰",
+    }))
+    assert updated["clubName"] == "باشگاه لومی ولنس"
+    assert updated["workHours"] == "۰۷:۰۰ تا ۲۲:۰۰"
+
+    reread = _data(client.get(f"{API}/settings", headers=tokens["COH"]))
+    assert reread["clubName"] == "باشگاه لومی ولنس"
+
+
+def test_broadcast_logs_persisted(client, tokens):
+    _data(client.post(f"{API}/notifications/broadcast", headers=tokens["ADH"], json={
+        "title": "تست لاگ اعلان",
+        "message": "پیام تستی برای ثبت در دیتابیس",
+        "type": "info",
+        "role": "athlete",
+    }))
+    logs = _data(client.get(f"{API}/notifications/broadcast-logs", headers=tokens["ADH"]))
+    assert any(log["title"] == "تست لاگ اعلان" and log["sentCount"] >= 1 for log in logs)
+
+    # Non-staff cannot read broadcast logs.
+    assert client.get(f"{API}/notifications/broadcast-logs", headers=tokens["AH"]).status_code == 403
+    assert client.get(f"{API}/notifications/broadcast-logs", headers=tokens["COH"]).status_code == 403
+

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, hash_password, require_roles
 from app.database import get_db
-from app.models import Branch, CheckIn, DailyReadiness, Goal, Membership, Notification, PasswordResetToken, User
+from app.models import Branch, BroadcastLog, CheckIn, DailyReadiness, Goal, Membership, Notification, PasswordResetToken, User
 from app.responses import error_response, paginated_response, success_response
 from app.schemas import AdminUserCreate, PasswordSetRequest, UserResponse, UserRoleUpdate, UserStatusUpdate, UserUpdate
 
@@ -173,8 +173,10 @@ def change_password(
 def create_user(
     req: AdminUserCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles("admin", "receptionist")),
+    current_user: User = Depends(require_roles("admin", "receptionist", "coach")),
 ):
+    if current_user.role == "coach" and req.role != "athlete":
+        return error_response("Coaches may only create athlete accounts", 403)
     existing = db.query(User).filter(User.email == req.email).first()
     if existing:
         return error_response("Email already registered", 409)
@@ -225,6 +227,7 @@ def delete_user(
     db.query(Goal).filter(Goal.athlete_id == user_id).delete(synchronize_session="fetch")
     db.query(Goal).filter(Goal.coach_id == user_id).update({"coach_id": None}, synchronize_session="fetch")
     db.query(Notification).filter(Notification.user_id == user_id).delete(synchronize_session="fetch")
+    db.query(BroadcastLog).filter(BroadcastLog.sender_id == user_id).update({"sender_id": None}, synchronize_session="fetch")
     db.query(PasswordResetToken).filter(PasswordResetToken.user_id == user_id).delete(synchronize_session="fetch")
     db.query(DailyReadiness).filter(DailyReadiness.user_id == user_id).delete(synchronize_session="fetch")
     db.delete(user)

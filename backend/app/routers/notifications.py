@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 
 from app.auth import get_current_user, require_roles
 from app.database import get_db
-from app.models import Notification, User
+from app.models import BroadcastLog, Notification, User
 from app.responses import error_response, paginated_response, success_response
-from app.schemas import NotificationBroadcast, NotificationCreate, NotificationResponse
+from app.schemas import BroadcastLogResponse, NotificationBroadcast, NotificationCreate, NotificationResponse
 
 router = APIRouter(prefix="/api/v1/notifications", tags=["Notifications"])
 
@@ -51,6 +51,24 @@ def create_notification(
     )
 
 
+@router.get("/broadcast-logs")
+def list_broadcast_logs(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_roles("admin", "receptionist")),
+):
+    query = db.query(BroadcastLog).order_by(BroadcastLog.created_at.desc())
+    total = query.count()
+    logs = query.offset((page - 1) * page_size).limit(page_size).all()
+    return paginated_response(
+        data=[BroadcastLogResponse.model_validate(log).model_dump(by_alias=True) for log in logs],
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
 @router.post("/broadcast")
 def broadcast_notification(
     req: NotificationBroadcast,
@@ -79,6 +97,17 @@ def broadcast_notification(
                 action_url=req.action_url,
             )
         )
+    db.add(
+        BroadcastLog(
+            sender_id=current_user.id,
+            title=req.title,
+            message=req.message,
+            type=req.type,
+            role=req.role,
+            branch_id=req.branch_id,
+            sent_count=len(recipients),
+        )
+    )
     db.commit()
     return success_response(
         data={"sent": len(recipients)},

@@ -81,12 +81,12 @@ export default function TransactionDetailPage() {
         </div>
       </div>
 
-      <div className="flex gap-3">
-        <CtaButton variant="outline" className="flex-1">
+      <div className="flex gap-3 print:hidden">
+        <CtaButton variant="outline" className="flex-1" onClick={() => window.print()}>
           <Printer strokeWidth={1.75} className="h-4 w-4" />
           چاپ رسید
         </CtaButton>
-        <CtaButton variant="outline" className="flex-1">
+        <CtaButton variant="outline" className="flex-1" onClick={() => window.print()}>
           <Download strokeWidth={1.75} className="h-4 w-4" />
           دانلود PDF
         </CtaButton>

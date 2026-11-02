@@ -29,6 +29,8 @@ import type {
   MembershipDistributionSlice,
   PeakHourPoint,
   AthleteActivityPoint,
+  ClubSettings,
+  BroadcastLog,
 } from "./types";
 
 export interface AuthPayload {
@@ -703,6 +705,22 @@ export class ApiClient {
     branchId?: string;
   }): Promise<ApiResponse<{ sent: number }>> {
     const res = await this.client.post<ApiResponse<{ sent: number }>>("/notifications/broadcast", data);
+    return res.data;
+  }
+
+  async getBroadcastLogs(params?: Record<string, unknown>): Promise<PaginatedResponse<BroadcastLog>> {
+    const res = await this.client.get<PaginatedResponse<BroadcastLog>>("/notifications/broadcast-logs", { params });
+    return this.remainingPages(res.data, "/notifications/broadcast-logs", params);
+  }
+
+  // ---- Settings ----
+  async getClubSettings(): Promise<ApiResponse<ClubSettings>> {
+    const res = await this.client.get<ApiResponse<ClubSettings>>("/settings");
+    return res.data;
+  }
+
+  async updateClubSettings(data: Partial<Omit<ClubSettings, "id" | "updatedAt">>): Promise<ApiResponse<ClubSettings>> {
+    const res = await this.client.put<ApiResponse<ClubSettings>>("/settings", data);
     return res.data;
   }
 

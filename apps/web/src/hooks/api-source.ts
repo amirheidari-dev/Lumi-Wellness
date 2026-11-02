@@ -88,6 +88,8 @@ export const Q = {
   payments: (userId?: string) => ["payments", userId || "all"] as const,
   payment: (id: string) => ["payment", id] as const,
   notifications: (userId: string) => ["notifications", userId] as const,
+  broadcastLogs: ["notifications", "broadcast-logs"] as const,
+  clubSettings: ["settings", "club"] as const,
   profile: ["profile"] as const,
   // Messaging. The unread badge gets its own root key so a broad invalidation
   // of ["messages"] cannot be mistaken for a message list by a cache patcher.

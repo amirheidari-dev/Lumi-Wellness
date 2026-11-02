@@ -24,7 +24,8 @@ const CONTRACT_V2_METHODS = [
   "updatePayment",
   "getAttendanceTrend", "getRevenueTrend", "getMembershipDistribution",
   "getPeakHours", "getAthleteActivity",
-  "createNotification", "broadcastNotification",
+  "createNotification", "broadcastNotification", "getBroadcastLogs",
+  "getClubSettings", "updateClubSettings",
   "getConversations", "createConversation", "getConversation",
   "getMessages", "sendMessage", "markConversationRead", "getUnreadMessageCount",
 ] as const;
@@ -179,4 +180,35 @@ describe("mock offline demo", () => {
     expect(res.data?.sent).toBe(true);
     expect(res.data?.devToken).toBeUndefined();
   });
+
+  it("persists club settings and broadcast logs across reads", async () => {
+    const { mockService } = await import("@/lib/mock-service");
+
+    const updated = await mockService.updateClubSettings({
+      clubName: "باشگاه لومی پرو",
+      sessionPrice: 220000,
+      personalSessionPrice: 480000,
+    });
+    expect(updated.data?.clubName).toBe("باشگاه لومی پرو");
+    expect(updated.data?.sessionPrice).toBe(220000);
+
+    const fetched = await mockService.getClubSettings();
+    expect(fetched.data?.clubName).toBe("باشگاه لومی پرو");
+    expect(fetched.data?.personalSessionPrice).toBe(480000);
+
+    const logsBefore = await mockService.getBroadcastLogs();
+    const countBefore = logsBefore.data?.length ?? 0;
+    const sent = await mockService.broadcastNotification({
+      title: "اطلاعیه تست",
+      message: "متن اطلاعیه تست",
+      role: "athlete",
+    });
+    expect(sent.data?.sent).toBeGreaterThan(0);
+
+    const logsAfter = await mockService.getBroadcastLogs();
+    expect(logsAfter.data?.length).toBe(countBefore + 1);
+    expect(logsAfter.data?.[0]?.title).toBe("اطلاعیه تست");
+    expect(logsAfter.data?.[0]?.role).toBe("athlete");
+  });
 });
+

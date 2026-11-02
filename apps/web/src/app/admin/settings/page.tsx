@@ -20,11 +20,26 @@ import {
   useCreateBranch,
   useUpdateBranch,
   useDeleteBranch,
+  useClubSettings,
+  useUpdateClubSettings,
 } from "@/hooks/use-api";
 import { Loading, ErrorDisplay } from "@/components/ui/DataState";
 import { ConfirmDialog } from "../_components/ConfirmDialog";
-import { validateIranianPhone } from "@/lib/utils";
+import { formatPersianNumber, validateIranianPhone } from "@/lib/utils";
 import type { Branch } from "@/lib/types";
+
+function parsePriceInput(value: string, fallback: number): number {
+  const persian = "۰۱۲۳۴۵۶۷۸۹";
+  const arabic = "٠١٢٣٤٥٦٧٨٩";
+  const normalized = value
+    .replace(/[۰-۹٠-٩]/g, (digit) => {
+      const pIdx = persian.indexOf(digit);
+      return pIdx > -1 ? String(pIdx) : String(arabic.indexOf(digit));
+    })
+    .replace(/[^0-9]/g, "");
+  const num = Number(normalized);
+  return Number.isFinite(num) && num >= 0 ? num : fallback;
+}
 
 /** Twilight input override (ui/Input base carries old theme tokens + a dark: variant). */
 const inputClassName =
@@ -37,6 +52,7 @@ function SettingsRow({
   value,
   onChange,
   type,
+  disabled,
 }: {
   id: string;
   icon: ReactNode;
@@ -44,6 +60,7 @@ function SettingsRow({
   value: string;
   onChange: (value: string) => void;
   type?: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-secondary">
@@ -54,7 +71,14 @@ function SettingsRow({
         </Label>
       </div>
       <div className="w-44 shrink-0 sm:w-60">
-        <Input id={id} type={type} value={value} onChange={(e) => onChange(e.target.value)} className={inputClassName} />
+        <Input
+          id={id}
+          type={type}
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className={inputClassName}
+        />
       </div>
     </div>
   );
@@ -174,17 +198,43 @@ const STAFF_HINT_ID = "branch-actions-hint";
 const NON_ADMIN_HINT = "ویرایش، فعال‌سازی و حذف شعبه فقط برای مدیران فعال است.";
 
 export default function SettingsPage() {
-  const [form, setForm] = useState({
-    branchName: "باشگاه Lumi Wellness",
-    address: "تهران، خیابان ولیعصر، نبش کوچه نور",
-    phone: "۰۲۱-۱۲۳۴۵۶۷۸",
-    email: "info@gymapp.ir",
-    sessionPrice: "۱۵۰,۰۰۰",
-    personalSessionPrice: "۳۵۰,۰۰۰",
-  });
+  const clubSettingsQuery = useClubSettings();
+  const updateClubSettings = useUpdateClubSettings();
+
+  const [overrides, setOverrides] = useState<
+    Partial<{
+      branchName: string;
+      address: string;
+      phone: string;
+      email: string;
+      sessionPrice: string;
+      personalSessionPrice: string;
+    }>
+  >({});
+
+  const settingsData = clubSettingsQuery.data?.data;
+  const form = {
+    branchName: overrides.branchName ?? settingsData?.clubName ?? "باشگاه Lumi Wellness",
+    address:
+      overrides.address ??
+      settingsData?.address ??
+      "تهران، خیابان ولیعصر، نبش کوچه نور",
+    phone: overrides.phone ?? settingsData?.phone ?? "021-12345678",
+    email: overrides.email ?? settingsData?.email ?? "info@gymapp.ir",
+    sessionPrice:
+      overrides.sessionPrice ??
+      (settingsData
+        ? formatPersianNumber(settingsData.sessionPrice.toLocaleString("en-US"))
+        : "۱۵۰,۰۰۰"),
+    personalSessionPrice:
+      overrides.personalSessionPrice ??
+      (settingsData
+        ? formatPersianNumber(settingsData.personalSessionPrice.toLocaleString("en-US"))
+        : "۳۵۰,۰۰۰"),
+  };
 
   const updateField = (field: string, value: string) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setOverrides((prev) => ({ ...prev, [field]: value }));
   };
 
   const { user } = useAuth();
@@ -200,6 +250,26 @@ export default function SettingsPage() {
   const canEdit = user?.role === "admin";
   const branchList = branches.data?.data ?? [];
   const disabledExplanation = canEdit ? undefined : NON_ADMIN_HINT;
+
+  const handleSaveSettings = async () => {
+    if (!canEdit) {
+      toast.error("تغییر تنظیمات باشگاه فقط برای مدیران مجاز است");
+      return;
+    }
+    try {
+      await updateClubSettings.mutateAsync({
+        clubName: form.branchName.trim() || "باشگاه Lumi Wellness",
+        address: form.address.trim(),
+        phone: form.phone.trim(),
+        email: form.email.trim(),
+        sessionPrice: parsePriceInput(form.sessionPrice, 150000),
+        personalSessionPrice: parsePriceInput(form.personalSessionPrice, 350000),
+      });
+      toast.success("تنظیمات با موفقیت در پایگاه داده ذخیره شد");
+    } catch (error) {
+      toast.error(apiErrorMessage(error, "ذخیره تنظیمات ناموفق بود"));
+    }
+  };
 
   const confirmDelete = () => {
     if (!deleting) return;
@@ -277,6 +347,7 @@ export default function SettingsPage() {
             icon={<Building2 className="h-4 w-4" strokeWidth={1.75} />}
             label="نام باشگاه"
             value={form.branchName}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("branchName", v)}
           />
           <SettingsRow
@@ -284,6 +355,7 @@ export default function SettingsPage() {
             icon={<Phone className="h-4 w-4" strokeWidth={1.75} />}
             label="تلفن"
             value={form.phone}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("phone", v)}
           />
           <SettingsRow
@@ -291,6 +363,7 @@ export default function SettingsPage() {
             icon={<MapPin className="h-4 w-4" strokeWidth={1.75} />}
             label="آدرس"
             value={form.address}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("address", v)}
           />
           <SettingsRow
@@ -299,6 +372,7 @@ export default function SettingsPage() {
             label="ایمیل"
             type="email"
             value={form.email}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("email", v)}
           />
         </div>
@@ -312,6 +386,7 @@ export default function SettingsPage() {
             icon={<Tag className="h-4 w-4" strokeWidth={1.75} />}
             label="قیمت هر جلسه عادی (تومان)"
             value={form.sessionPrice}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("sessionPrice", v)}
           />
           <SettingsRow
@@ -319,15 +394,20 @@ export default function SettingsPage() {
             icon={<Sparkles className="h-4 w-4" strokeWidth={1.75} />}
             label="قیمت هر جلسه شخصی (تومان)"
             value={form.personalSessionPrice}
+            disabled={!canEdit || updateClubSettings.isPending}
             onChange={(v) => updateField("personalSessionPrice", v)}
           />
         </div>
       </section>
 
       <div className="flex justify-end">
-        <CtaButton onClick={() => toast.success("تنظیمات با موفقیت ذخیره شد")} className="w-auto px-6">
+        <CtaButton
+          onClick={() => void handleSaveSettings()}
+          disabled={!canEdit || updateClubSettings.isPending}
+          className="w-auto px-6"
+        >
           <Save className="h-4 w-4" strokeWidth={1.75} />
-          ذخیره تنظیمات
+          {updateClubSettings.isPending ? "در حال ذخیره..." : "ذخیره تنظیمات"}
         </CtaButton>
       </div>
 

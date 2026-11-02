@@ -15,7 +15,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
   User, UserRole, UserStatus, Branch, MembershipPlan, MembershipInput, Exercise, TrainingProgram, ProgramExercise,
-  ProgramExerciseInput, Goal, Payment, Notification, AthleteDashboardData,
+  ProgramExerciseInput, Goal, Payment, Notification, AthleteDashboardData, ClubSettings,
 } from "@/lib/types";
 import {
   Q, USE_MOCK, mockService, requireUserId,
@@ -68,7 +68,8 @@ export function useUser(id?: string) {
 export function useCreateUser() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<User>) => USE_MOCK ? mockService.createUser(data) : api.createUser(data as Record<string, unknown>),
+    mutationFn: (data: Partial<User> & { password?: string }) =>
+      USE_MOCK ? mockService.createUser(data) : api.createUser(data as Record<string, unknown>),
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["users"] }); },
   });
 }
@@ -921,7 +922,36 @@ export function useBroadcastNotification() {
   return useMutation({
     mutationFn: (data: { title: string; message: string; type?: Notification["type"]; role?: User["role"]; branchId?: string }) =>
       USE_MOCK ? mockService.broadcastNotification(data) : api.broadcastNotification(data),
-    onSuccess: () => { qc.invalidateQueries({ queryKey: ["notifications"] }); },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      qc.invalidateQueries({ queryKey: Q.broadcastLogs });
+    },
+  });
+}
+
+export function useBroadcastLogs() {
+  return useQuery({
+    queryKey: Q.broadcastLogs,
+    queryFn: () => USE_MOCK ? mockService.getBroadcastLogs() : api.getBroadcastLogs(),
+  });
+}
+
+// === Club Settings ===
+export function useClubSettings() {
+  return useQuery({
+    queryKey: Q.clubSettings,
+    queryFn: () => USE_MOCK ? mockService.getClubSettings() : api.getClubSettings(),
+  });
+}
+
+export function useUpdateClubSettings() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Omit<ClubSettings, "id" | "updatedAt">>) =>
+      USE_MOCK ? mockService.updateClubSettings(data) : api.updateClubSettings(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: Q.clubSettings });
+    },
   });
 }
 

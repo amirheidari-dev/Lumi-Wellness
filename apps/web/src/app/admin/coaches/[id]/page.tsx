@@ -1,13 +1,13 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Phone, Mail, Calendar, ChevronRight, Edit, Trash2, Award, Plus, ClipboardList } from "lucide-react";
+import { Phone, Mail, Calendar, ChevronRight, Edit, Trash2, Award, Plus, ClipboardList, KeyRound } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,6 +25,7 @@ import { apiErrorMessage } from "@/components/auth/auth-helpers";
 import { Loading, ErrorDisplay } from "@/components/ui/DataState";
 import {
   useUser,
+  useDeleteUser,
   useTrainingPrograms,
   useUsers,
   useCreateTrainingProgram,
@@ -32,17 +33,15 @@ import {
 import { PageShell, SectionTitle } from "@/components/twilight/Page";
 import { StatCard, EmptyState } from "@/components/twilight/controls";
 import { Field } from "../../_components/Field";
-import { fullName } from "../../_components/admin-data";
+import { fullName, USER_STATUS } from "../../_components/admin-data";
 import {
   addDaysToDateInput,
   jalaliHint,
   todayDateInput,
 } from "../../_components/user-admin";
+import { UserEditSheet, UserPasswordSheet } from "../../_components/UserAdminSheets";
+import { ConfirmDialog } from "../../_components/ConfirmDialog";
 import type { TrainingProgram } from "@/lib/types";
-
-const statusMap: Record<string, { label: string; variant: "success" | "secondary" | "destructive" }> = {
-  active: { label: "فعال", variant: "success" }, inactive: { label: "غیرفعال", variant: "secondary" }, suspended: { label: "تعلیق شده", variant: "destructive" },
-};
 
 function InfoRow({ icon, label, value, ltr }: { icon: ReactNode; label: string; value: ReactNode; ltr?: boolean }) {
   return (
@@ -300,22 +299,40 @@ function AssignProgramSheet({
 
 export default function CoachProfilePage() {
   const params = useParams<{ id: string }>();
-  const { data, isLoading, isError } = useUser(params.id);
+  const router = useRouter();
+  const { data, isLoading, isError, refetch } = useUser(params.id);
   const programsQuery = useTrainingPrograms();
   const usersQuery = useUsers("athlete");
+  const deleteUser = useDeleteUser();
   const [assigning, setAssigning] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   if (isLoading) return <Loading />;
-  if (isError) return <ErrorDisplay />;
-  const coach = data?.data as any;
+  if (isError) return <ErrorDisplay onRetry={() => void refetch()} />;
+  const coach = data?.data;
   if (!coach) return <ErrorDisplay message="مربی یافت نشد" />;
 
-  const coachName = `${coach.firstName} ${coach.lastName}`;
+  const coachName = `${coach.firstName} ${coach.lastName}`.trim() || coach.email;
+  const statusMeta = USER_STATUS[coach.status] ?? USER_STATUS.active;
   const myPrograms = (programsQuery.data?.data ?? []).filter(
     (program) => program.coachId === params.id
   );
   // The user row carries no student count — distinct coached athletes.
   const studentCount = new Set(myPrograms.map((program) => program.athleteId)).size;
   const athleteById = new Map((usersQuery.data?.data ?? []).map((u) => [u.id, u] as const));
+
+  const handleConfirmDelete = () => {
+    deleteUser.mutate(coach.id, {
+      onSuccess: () => {
+        toast.success(`مربی «${coachName}» حذف شد`);
+        setDeleteOpen(false);
+        router.push("/admin/coaches");
+      },
+      onError: (err) => toast.error(apiErrorMessage(err, "حذف مربی ناموفق بود")),
+    });
+  };
 
   return (
     <PageShell>
@@ -334,19 +351,31 @@ export default function CoachProfilePage() {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
             <h1 className="font-serif text-2xl font-normal text-foreground">{coach.firstName} {coach.lastName}</h1>
-            <Badge variant={statusMap[coach.status].variant}>{statusMap[coach.status].label}</Badge>
+            <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm"><Edit className="h-4 w-4" strokeWidth={1.75} /> ویرایش</Button>
-          <Button variant="destructive" size="sm"><Trash2 className="h-4 w-4" strokeWidth={1.75} /></Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+            <Edit className="h-4 w-4" strokeWidth={1.75} /> ویرایش
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPasswordOpen(true)}>
+            <KeyRound className="h-4 w-4" strokeWidth={1.75} /> رمز عبور
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            aria-label={`حذف ${coach.firstName} ${coach.lastName}`}
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+          </Button>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">
         <InfoRow icon={<Phone className="h-4 w-4" strokeWidth={1.75} />} label="تلفن" value={coach.phone} ltr />
         <InfoRow icon={<Mail className="h-4 w-4" strokeWidth={1.75} />} label="ایمیل" value={coach.email} ltr />
-        <InfoRow icon={<Award className="h-4 w-4" strokeWidth={1.75} />} label="شعبه" value={coach.branchName ?? "—"} />
+        <InfoRow icon={<Award className="h-4 w-4" strokeWidth={1.75} />} label="شعبه" value={coach.branchId ?? "—"} />
         <InfoRow icon={<Calendar className="h-4 w-4" strokeWidth={1.75} />} label="عضویت از" value={formatDate(coach.createdAt)} />
       </div>
 
@@ -472,6 +501,17 @@ export default function CoachProfilePage() {
         onOpenChange={setAssigning}
         coachId={params.id}
         coachName={coachName}
+      />
+      <UserEditSheet open={editOpen} onOpenChange={setEditOpen} user={coach} />
+      <UserPasswordSheet open={passwordOpen} onOpenChange={setPasswordOpen} user={coach} />
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="حذف حساب مربی"
+        description={`حساب مربی «${coachName}» برای همیشه حذف می‌شود. این کار قابل بازگشت نیست.`}
+        confirmLabel="حذف مربی"
+        loading={deleteUser.isPending}
+        onConfirm={handleConfirmDelete}
       />
     </PageShell>
   );

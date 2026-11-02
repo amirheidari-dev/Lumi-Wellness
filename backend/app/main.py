@@ -22,6 +22,7 @@ from app.routers import (
     messages,
     notifications,
     payments,
+    settings as settings_router,
     training_programs,
     users,
 )
@@ -79,6 +80,7 @@ app.include_router(dashboard.router)
 app.include_router(analytics.router)
 app.include_router(notifications.router)
 app.include_router(messages.router)
+app.include_router(settings_router.router)
 
 
 @app.exception_handler(Exception)

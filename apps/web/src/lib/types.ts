@@ -393,3 +393,27 @@ export interface AthleteActivityPoint {
   durationMinutes: number;
   exercisesCompleted: number;
 }
+
+export interface ClubSettings {
+  id: string;
+  clubName: string;
+  phone: string;
+  email: string;
+  address: string;
+  workHours: string;
+  sessionPrice: number;
+  personalSessionPrice: number;
+  updatedAt: string;
+}
+
+export interface BroadcastLog {
+  id: string;
+  senderId?: string | null;
+  title: string;
+  message: string;
+  type: Notification["type"];
+  role?: UserRole | null;
+  branchId?: string | null;
+  sentCount: number;
+  createdAt: string;
+}

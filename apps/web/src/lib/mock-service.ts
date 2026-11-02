@@ -6,7 +6,7 @@ import type {
   AthleteDashboardData, ApiResponse, PaginatedResponse, AuthTokens,
   UserRole, UserStatus, ProgramExerciseInput, MembershipInput, Conversation, ChatMessage,
   AttendanceTrendPoint, RevenueTrendPoint, RevenueSeries, MembershipDistributionSlice,
-  PeakHourPoint, AthleteActivityPoint,
+  PeakHourPoint, AthleteActivityPoint, ClubSettings, BroadcastLog,
 } from "./types";
 import {
   mockUsers, mockAthletes, mockBranches, mockPlans,
@@ -105,6 +105,32 @@ function computeStreaks(checkIns: { checkInTime: string }[]): { currentStreak: n
 }
 
 const RESET_TOKEN_TTL_MS = 30 * 60 * 1000;
+
+let mockClubSettings: ClubSettings = {
+  id: "default",
+  clubName: "باشگاه Lumi Wellness",
+  phone: "021-88776655",
+  email: "info@fitpro.ir",
+  address: "تهران، خیابان ولیعصر، پلاک ۱۲۳",
+  workHours: "۰۶:۰۰ تا ۲۳:۰۰",
+  sessionPrice: 150000,
+  personalSessionPrice: 350000,
+  updatedAt: nowIso(),
+};
+
+const mockBroadcastLogs: BroadcastLog[] = [
+  {
+    id: "blog-1",
+    senderId: "admin-1",
+    title: "تغییر ساعت کاری جمعه",
+    message: "به اطلاع اعضا می‌رسد باشگاه روز جمعه از ساعت ۸ الی ۲۰ فعال خواهد بود.",
+    type: "info",
+    role: null,
+    branchId: null,
+    sentCount: mockUsers.length,
+    createdAt: new Date(Date.now() - 86_400_000 * 2).toISOString(),
+  },
+];
 
 /** Rows the caller may see: their own, or everything for an `admin`. */
 function visibleConversationRows(viewerId: string): MockConversationRow[] {
@@ -302,15 +328,22 @@ export const mockService = {
     return wrap(user);
   },
 
-  async createUser(data: Partial<User>): Promise<ApiResponse<User>> {
+  async createUser(data: Partial<User> & { password?: string }): Promise<ApiResponse<User>> {
     await sleep(DELAY);
+    if (data.password) {
+      assertPasswordPolicy(data.password);
+    }
+    const branch = data.branchId ? mockBranches.find((b) => b.id === data.branchId) : undefined;
     const user: User = {
       id: generateId(), email: data.email || "", firstName: data.firstName || "",
       lastName: data.lastName || "", phone: data.phone || "", role: data.role || "athlete",
-      status: "active", branchId: data.branchId, branchName: data.branchName,
+      status: "active", branchId: data.branchId, branchName: data.branchName ?? branch?.name,
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     };
     mockUsers.push(user);
+    if (data.password) {
+      mockPasswords[user.id] = data.password;
+    }
     return wrap(user);
   },
 
@@ -635,12 +668,23 @@ export const mockService = {
   // === Training Programs ===
   async getTrainingPrograms(): Promise<PaginatedResponse<TrainingProgram>> {
     await sleep(DELAY);
-    return wrapList(getMockPrograms());
+    return wrapList(
+      getMockPrograms().map((p) => ({
+        ...p,
+        athlete: p.athlete ?? mockUsers.find((u) => u.id === p.athleteId),
+        coach: p.coach ?? mockUsers.find((u) => u.id === p.coachId),
+      }))
+    );
   },
 
   async getTrainingProgram(id: string): Promise<ApiResponse<TrainingProgram>> {
     await sleep(DELAY / 2);
-    return wrap(findOrThrow(getMockPrograms(), id, "Program"));
+    const p = findOrThrow(getMockPrograms(), id, "Program");
+    return wrap({
+      ...p,
+      athlete: p.athlete ?? mockUsers.find((u) => u.id === p.athleteId),
+      coach: p.coach ?? mockUsers.find((u) => u.id === p.coachId),
+    });
   },
 
   async createTrainingProgram(data: Partial<TrainingProgram>): Promise<ApiResponse<TrainingProgram>> {
@@ -1056,7 +1100,36 @@ export const mockService = {
       });
     }
 
+    mockBroadcastLogs.unshift({
+      id: generateId(),
+      title: data.title,
+      message: data.message,
+      type: data.type || "info",
+      role: data.role ?? null,
+      branchId: data.branchId ?? null,
+      sentCount: recipients.length,
+      createdAt: nowIso(),
+    });
+
     return wrap({ sent: recipients.length });
+  },
+
+  async getBroadcastLogs(): Promise<PaginatedResponse<BroadcastLog>> {
+    await sleep(DELAY / 2);
+    return wrapList([...mockBroadcastLogs]);
+  },
+
+  // === Settings ===
+  async getClubSettings(): Promise<ApiResponse<ClubSettings>> {
+    await sleep(DELAY / 2);
+    return wrap(mockClubSettings);
+  },
+
+  async updateClubSettings(data: Partial<Omit<ClubSettings, "id" | "updatedAt">>): Promise<ApiResponse<ClubSettings>> {
+    await sleep(DELAY / 2);
+    const patch = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
+    mockClubSettings = { ...mockClubSettings, ...patch, updatedAt: nowIso() };
+    return wrap(mockClubSettings);
   },
 
   // === Profile ===

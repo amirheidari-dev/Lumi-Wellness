@@ -332,3 +332,32 @@ class DailyReadiness(Base):
     day = Column(String, primary_key=True)
     state = Column(String, nullable=False)
     updated_at = Column(DateTime, default=_utcnow_naive, onupdate=_utcnow_naive)
+
+
+class ClubSettings(Base):
+    __tablename__ = "club_settings"
+
+    id = Column(String, primary_key=True, default="default")
+    club_name = Column(String, default="باشگاه فیت‌پرو", nullable=False)
+    phone = Column(String, default="021-88776655", nullable=False)
+    email = Column(String, default="info@fitpro.ir", nullable=False)
+    address = Column(Text, default="تهران، خیابان ولیعصر، پلاک ۱۲۳", nullable=False)
+    work_hours = Column(String, default="۰۶:۰۰ تا ۲۳:۰۰", nullable=False)
+    session_price = Column(Integer, default=150000, nullable=False)
+    personal_session_price = Column(Integer, default=350000, nullable=False)
+    updated_at = Column(DateTime, default=_utcnow_naive, onupdate=_utcnow_naive)
+
+
+class BroadcastLog(Base):
+    __tablename__ = "broadcast_logs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    sender_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    title = Column(String, nullable=False)
+    message = Column(Text, nullable=False)
+    type = Column(String, default="info")
+    role = Column(String, nullable=True)
+    branch_id = Column(String, nullable=True)
+    sent_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=_utcnow_naive)
+

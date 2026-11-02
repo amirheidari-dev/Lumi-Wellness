@@ -9,9 +9,10 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Avatar, AvatarFallback } from "@/components/ui/Avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/Table";
-import { getInitials, generateAvatarColor, formatDate, cn } from "@/lib/utils";
-import { useUsers } from "@/hooks/use-api";
+import { getInitials, generateAvatarColor, formatDate, formatPersianNumber, cn } from "@/lib/utils";
+import { useUsers, useTrainingPrograms, useCheckIns } from "@/hooks/use-api";
 import { Loading, ErrorDisplay } from "@/components/ui/DataState";
+import { progressTone } from "../_meta";
 
 const statusFilters = ["all", "active", "inactive"] as const;
 type StatusFilter = (typeof statusFilters)[number];
@@ -31,16 +32,20 @@ function getStatusBadge(status: string) {
 export default function AthletesPage() {
   const [search, setSearch] = React.useState("");
   const [filter, setFilter] = React.useState<StatusFilter>("all");
-  const { data, isLoading, isError, error } = useUsers("athlete");
+  const { data, isLoading, isError, error, refetch } = useUsers("athlete");
+  const { data: programsResp } = useTrainingPrograms();
+  const { data: checkInsResp } = useCheckIns();
 
   if (isLoading) return <Loading />;
-  if (isError) return <ErrorDisplay message={error?.message} />;
+  if (isError) return <ErrorDisplay message={error?.message} onRetry={refetch} />;
 
   const usersData = data?.data || [];
+  const programs = programsResp?.data || [];
+  const checkIns = checkInsResp?.data || [];
 
   const filtered = usersData.filter((a) => {
     const name = `${a.firstName} ${a.lastName}`;
-    const matchesSearch = name.includes(search) || a.phone.includes(search);
+    const matchesSearch = name.includes(search) || a.phone.includes(search) || a.email.includes(search);
     const matchesFilter = filter === "all" || a.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -87,6 +92,24 @@ export default function AthletesPage() {
           <TableBody>
             {filtered.map((athlete) => {
               const name = `${athlete.firstName} ${athlete.lastName}`;
+              const athletePrograms = programs.filter((p) => p.athleteId === athlete.id);
+              const currentProgram =
+                athletePrograms.find((p) => p.status === "active") ?? athletePrograms[0];
+              const totalExercises = currentProgram?.exercises?.length ?? 0;
+              const completedExercises =
+                currentProgram?.exercises?.filter((e) => e.isCompleted).length ?? 0;
+              const progressPct =
+                totalExercises > 0 ? Math.round((completedExercises / totalExercises) * 100) : 0;
+
+              const athleteCheckIns = checkIns
+                .filter((c) => c.userId === athlete.id)
+                .sort((a, b) => b.checkInTime.localeCompare(a.checkInTime));
+              const lastCheckInIso = athleteCheckIns[0]?.checkInTime ?? athlete.lastLoginAt;
+
+              const programLink = currentProgram
+                ? `/coach/programs/${currentProgram.id}`
+                : `/coach/programs/new?athleteId=${athlete.id}`;
+
               return (
                 <TableRow key={athlete.id} className={cn("border-t border-border hover:bg-secondary")}>
                   <TableCell>
@@ -100,9 +123,35 @@ export default function AthletesPage() {
                     </Link>
                   </TableCell>
                   <TableCell dir="ltr" className="text-left text-foreground">{athlete.phone}</TableCell>
-                  <TableCell className="text-foreground">–</TableCell>
-                  <TableCell className="text-foreground">{athlete.lastLoginAt ? formatDate(athlete.lastLoginAt) : "–"}</TableCell>
-                  <TableCell className="text-foreground">–</TableCell>
+                  <TableCell className="text-foreground">
+                    {currentProgram ? (
+                      <Link href={`/coach/programs/${currentProgram.id}`} className="text-sm font-medium hover:underline">
+                        {currentProgram.name}
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">بدون برنامه</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-foreground">
+                    {lastCheckInIso ? formatDate(lastCheckInIso) : "–"}
+                  </TableCell>
+                  <TableCell className="text-foreground">
+                    {currentProgram ? (
+                      <div className="flex items-center gap-2">
+                        <div className="h-2 w-20 overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className={cn("h-full rounded-full", progressTone(progressPct))}
+                            style={{ width: `${progressPct}%` }}
+                          />
+                        </div>
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {formatPersianNumber(progressPct)}٪
+                        </span>
+                      </div>
+                    ) : (
+                      "–"
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant={getStatusBadge(athlete.status).variant}>
                       {getStatusBadge(athlete.status).label}
@@ -116,9 +165,11 @@ export default function AthletesPage() {
                           مشاهده
                         </Link>
                       </Button>
-                      <Button variant="ghost" size="sm">
-                        <ClipboardList className="h-4 w-4" />
-                        برنامه تمرینی
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={programLink}>
+                          <ClipboardList className="h-4 w-4" />
+                          {currentProgram ? "برنامه تمرینی" : "ساخت برنامه"}
+                        </Link>
                       </Button>
                     </div>
                   </TableCell>

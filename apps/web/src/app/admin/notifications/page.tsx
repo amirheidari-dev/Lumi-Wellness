@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PageShell, PageHeader, SectionTitle, MicroLabelFa } from "@/components/twilight/Page";
 import { TwilightCard, RowCard, CtaButton, FilterChips, EmptyState } from "@/components/twilight/controls";
 import { toast } from "sonner";
 import { Send, Bell, Loader2, RotateCcw } from "lucide-react";
 import {
   useBroadcastNotification,
+  useBroadcastLogs,
   useBranches,
   useCreateNotification,
   useUsers,
@@ -40,37 +41,19 @@ const targetRole: Record<string, UserRole | undefined> = {
   coaches: "coach",
 };
 
+const roleAudienceLabel: Record<string, string> = {
+  athlete: "اعضای باشگاه",
+  coach: "مربیان",
+  receptionist: "پذیرش",
+  admin: "مدیران",
+};
+
 interface SentLogEntry {
   id: string;
   time: string;
   title: string;
   audience: string;
   count: number;
-}
-
-const HISTORY_KEY = "admin-notification-history";
-const HISTORY_LIMIT = 30;
-
-function loadHistory(): SentLogEntry[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = window.localStorage.getItem(HISTORY_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (entry): entry is SentLogEntry =>
-        typeof entry === "object" &&
-        entry !== null &&
-        typeof (entry as SentLogEntry).id === "string" &&
-        typeof (entry as SentLogEntry).time === "string" &&
-        typeof (entry as SentLogEntry).title === "string" &&
-        typeof (entry as SentLogEntry).audience === "string" &&
-        typeof (entry as SentLogEntry).count === "number"
-    );
-  } catch {
-    return [];
-  }
 }
 
 function audienceLabel(target: string, branchName?: string): string {
@@ -94,38 +77,35 @@ export default function BroadcastPage() {
   const [messageError, setMessageError] = useState<string | null>(null);
   const [userError, setUserError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  // Lazy initializer: the log is read once from this browser and survives
-  // navigation without a hydration round-trip.
-  const [history, setHistory] = useState<SentLogEntry[]>(loadHistory);
+  const [singleEntries, setSingleEntries] = useState<SentLogEntry[]>([]);
 
   const branches = useBranches();
   const users = useUsers();
   const broadcast = useBroadcastNotification();
+  const broadcastLogsQuery = useBroadcastLogs();
   const createNotification = useCreateNotification();
-
-  useEffect(() => {
-    try {
-      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_LIMIT)));
-    } catch {
-      // Private mode quota — history simply does not persist.
-    }
-  }, [history]);
-
-  const pushEntry = (entry: Omit<SentLogEntry, "id" | "time">) =>
-    setHistory((prev) =>
-      [
-        {
-          ...entry,
-          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          time: new Date().toISOString(),
-        },
-        ...prev,
-      ].slice(0, HISTORY_LIMIT)
-    );
 
   const branchList = useMemo(() => branches.data?.data ?? [], [branches.data]);
   const userList = useMemo(() => users.data?.data ?? [], [users.data]);
   const pending = broadcast.isPending || createNotification.isPending;
+
+  const history = useMemo<SentLogEntry[]>(() => {
+    const branchNameById = new Map(branchList.map((b) => [b.id, b.name] as const));
+    const persisted = (broadcastLogsQuery.data?.data ?? []).map((log) => {
+      const roleGroup = log.role
+        ? roleAudienceLabel[log.role] ?? log.role
+        : "همه اعضا";
+      const bName = log.branchId ? branchNameById.get(log.branchId) : undefined;
+      return {
+        id: log.id,
+        time: log.createdAt,
+        title: log.title,
+        audience: bName ? `${roleGroup} · ${bName}` : roleGroup,
+        count: log.sentCount,
+      };
+    });
+    return [...singleEntries, ...persisted].sort((a, b) => b.time.localeCompare(a.time));
+  }, [broadcastLogsQuery.data, branchList, singleEntries]);
 
   const validate = (single: boolean): boolean => {
     let ok = true;
@@ -160,7 +140,6 @@ export default function BroadcastPage() {
 
   const sendBroadcast = async () => {
     try {
-      const branchName = branchId ? branchList.find((b) => b.id === branchId)?.name : undefined;
       const result = await broadcast.mutateAsync({
         title: title.trim(),
         message: message.trim(),
@@ -168,11 +147,6 @@ export default function BroadcastPage() {
         branchId: branchId || undefined,
       });
       const count = result.data?.sent ?? 0;
-      pushEntry({
-        title: title.trim(),
-        audience: audienceLabel(target, branchName),
-        count,
-      });
       toast.success(`اعلان برای ${formatPersianNumber(count)} حساب ثبت شد`);
       setTitle("");
       setMessage("");
@@ -192,11 +166,16 @@ export default function BroadcastPage() {
         title: title.trim(),
         message: message.trim(),
       });
-      pushEntry({
-        title: title.trim(),
-        audience: targetUser ? fullName(targetUser) || targetUser.email : userId,
-        count: 1,
-      });
+      setSingleEntries((prev) => [
+        {
+          id: `${Date.now()}`,
+          time: new Date().toISOString(),
+          title: title.trim(),
+          audience: targetUser ? fullName(targetUser) || targetUser.email : userId,
+          count: 1,
+        },
+        ...prev,
+      ]);
       toast.success("اعلان برای کاربر ثبت شد");
       setTitle("");
       setMessage("");

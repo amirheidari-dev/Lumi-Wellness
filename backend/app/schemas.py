@@ -791,3 +791,40 @@ class AthleteActivityPoint(BaseSchema):
     checked_in: bool
     duration_minutes: int
     exercises_completed: int
+
+
+# ---- Club Settings & Broadcast Logs ----
+
+class ClubSettingsResponse(BaseSchema):
+    id: str
+    club_name: str
+    phone: str
+    email: str
+    address: str
+    work_hours: str
+    session_price: int = 150000
+    personal_session_price: int = 350000
+    updated_at: datetime
+
+
+class ClubSettingsUpdate(BaseSchema):
+    club_name: Optional[str] = Field(default=None, max_length=120)
+    phone: Optional[str] = Field(default=None, max_length=50)
+    email: Optional[str] = Field(default=None, max_length=120)
+    address: Optional[str] = Field(default=None, max_length=500)
+    work_hours: Optional[str] = Field(default=None, max_length=120)
+    session_price: Optional[int] = Field(default=None, ge=0)
+    personal_session_price: Optional[int] = Field(default=None, ge=0)
+
+
+class BroadcastLogResponse(BaseSchema):
+    id: str
+    sender_id: Optional[str] = None
+    title: str
+    message: str
+    type: str
+    role: Optional[str] = None
+    branch_id: Optional[str] = None
+    sent_count: int
+    created_at: datetime
+

@@ -14,3 +14,15 @@
 - **فایل‌های تغییریافته:** `apps/web/src/components/twilight/CapsuleChart.tsx`, `apps/web/src/components/twilight/capsule-chart-data.ts`, `apps/web/src/components/twilight/capsule-chart-data.test.ts`, `apps/web/src/components/twilight/CapsuleChart.test.tsx`, `apps/web/src/app/athlete/history/page.tsx`, `apps/web/src/app/coach/athletes/new/page.tsx`, `apps/web/public/apple-fitness-direction.html`, `apps/web/package.json`, `package.json`, `package-lock.json`, `backend/app/main.py`, `backend/app/responses.py`, `backend/app/routers/auth.py`, `backend/tests/test_cors.py`, `README.md`, `FINAL_REPORT.md`, `docs/DESIGN_SYSTEM.md`, `.context/STATE.md`, `.context/SESSION_LOG.md`
 - **تسک پیشنهادی بعدی:** تغییر نام پروژهٔ Vercel به `lumi-wellness` و ست‌کردن `CORS_ALLOW_ORIGIN_REGEX=^https://(lumi-wellness|gym-app)-.*\.vercel\.app$` روی بک‌اند؛ سپس لینک ریپو به پروژهٔ Vercel با Root Directory = `apps/web` و ست‌کردن `NEXT_PUBLIC_*`.
 ---
+
+## [2026-11-02T22:45:00+03:30] Agent: antigravity
+- **خلاصه کار:** پیاده‌سازی کامل نقشه راه ۳ فازی رفع گپ‌های عملکردی سامانه: (فاز ۱ - پنل مربیان) جایگزینی تمامی `setTimeout`ها با هوک‌های واقعی در صفحات حرکات و برنامه‌های تمرینی، اتصال `ProgramDetailsSheet`، `ProgramExerciseSheet`، `ProgramExerciseRow` و `CloneProgramSheet` در `/coach/programs/[id]` و `/coach/templates`، اصلاح دسترسی `POST /api/v1/users` برای نقش `coach` و تکمیل `/coach/athletes` و `/coach/athletes/new`؛ (فاز ۲ - پنل مدیریت) جایگزینی جداول ساده اعضا و مربیان با `UserDirectory.tsx`، اتصال شیت‌های ویرایش/رمز عبور/حذف/اشتراک/انجماد در `/admin/members/[id]` و `/admin/coaches/[id]`، و فعال‌سازی چاپ رسید (`window.print()`) در `/admin/payments/[id]`؛ (فاز ۳ - بک‌اند و پایداری داده) ایجاد مدل و روتر `ClubSettings` (`GET/PUT /api/v1/settings`) و جدول `BroadcastLog` (`GET /api/v1/notifications/broadcast-logs`) و اتصال آن‌ها به `/admin/settings` و `/admin/notifications` (حذف کامل وابستگی به `localStorage`). تأیید: type-check، lint، ۱۶۳ تست Vitest، بیلد پروداکشن و تست مرورگر زنده با Playwright بدون خطا.
+- **فایل‌های تغییریافته:** `backend/app/models.py`, `backend/app/schemas.py`, `backend/app/routers/settings.py`, `backend/app/main.py`, `backend/app/routers/notifications.py`, `backend/app/routers/users.py`, `backend/tests/test_contract_v2.py`, `apps/web/src/lib/types.ts`, `apps/web/src/lib/api-client.ts`, `apps/web/src/lib/mock-service.ts`, `apps/web/src/hooks/api-source.ts`, `apps/web/src/hooks/use-api.ts`, `apps/web/src/hooks/api-source.test.ts`, `apps/web/src/app/coach/**`, `apps/web/src/app/admin/**`, `.context/STATE.md`, `.context/SESSION_LOG.md`
+- **تسک پیشنهادی بعدی:** اجرای مایگریشن دیتابیس روی محیط پروداکشن بک‌اند برای جداول `club_settings` و `broadcast_logs` و اتصال به پروژه Vercel.
+---
+
+## [2026-11-02T19:14:10.298964] Agent: antigravity
+- **خلاصه کار:** Session completed successfully.
+- **فایل‌های تغییریافته:** none
+- **تسک پیشنهادی بعدی:** Check .context/STATE.md for next planned task.
+---
