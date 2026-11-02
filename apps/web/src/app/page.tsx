@@ -200,81 +200,150 @@ function StatsSection() {
 
 function HeroSection({ onLogin, onRegister }: { onLogin: () => void; onRegister: () => void }) {
   return (
-    <section id="top" className="relative flex min-h-[92svh] items-center px-4 py-16 lg:py-28">
-      <GymBackdrop className="absolute inset-0" />
+    <section id="top" className="relative flex min-h-[92svh] items-center overflow-hidden px-4 py-16 lg:py-24">
+      {/* Refined ambient atmosphere aligned with Lumi Twilight palette */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 -z-10">
+        <GymBackdrop className="absolute inset-0 opacity-40 dark:opacity-75 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/90 via-background/60 to-background dark:from-background/70 dark:via-background/40 dark:to-background" />
+        <div className="absolute top-1/4 -right-24 h-96 w-96 rounded-full bg-blush-fixed/15 blur-[120px] dark:bg-blush-solid/10" />
+        <div className="absolute -bottom-16 left-1/4 h-80 w-80 rounded-full bg-primary/10 blur-[100px]" />
+      </div>
 
-      <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1.05fr_.95fr] lg:gap-14">
+      <div className="relative z-10 mx-auto grid w-full max-w-6xl items-center gap-12 lg:grid-cols-[1.1fr_.9fr] lg:gap-16">
         <div className="text-right">
-          {/*
-           * Above-fold hero content paints statically (no entrance Reveal):
-           * the H1/CTA row is the LCP element and every millisecond of
-           * animation delay lands directly on the score.
-           */}
-          <p className="mb-6 inline-flex max-w-full items-center gap-2 whitespace-nowrap rounded-full border border-blush-fixed/30 bg-blush-fixed/10 px-4 py-1.5 text-xs font-medium text-blush-fixed sm:text-sm">
+          {/* Tag pill */}
+          <div className="mb-6 inline-flex max-w-full items-center gap-2.5 rounded-full border border-blush/25 bg-blush/10 px-4 py-1.5 text-xs font-medium text-blush backdrop-blur-md">
+            <span className="flex h-2 w-2 rounded-full bg-blush animate-pulse" aria-hidden />
             <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
-            بهترین پلتفرم مدیریت باشگاه بانوان
-          </p>
+            <span>استودیو دیجیتال تندرستی و تمرین بانوان</span>
+          </div>
 
-          <h1 className="mb-5 font-serif text-[2.1rem] font-medium leading-[1.5] tracking-tight text-logo-ink-inverse sm:text-5xl md:text-6xl lg:text-7xl">
-            <span className="block">حرکت، قدرت،</span>
-            <span className="block text-blush-fixed">نسخه بهتر تو</span>
+          <h1 className="mb-6 font-serif text-[2.35rem] font-normal leading-[1.35] tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
+            <span className="block font-light">تمرین آرام،</span>
+            <span className="block bg-gradient-to-l from-blush via-blush-solid to-primary bg-clip-text font-medium text-transparent">
+              پیشرفت پیوسته
+            </span>
           </h1>
 
-          <p className="mb-8 max-w-xl text-[15px] leading-8 text-muted-foreground md:text-lg">
-            Lumi Wellness، باشگاه دیجیتال اختصاصی بانوان برای برنامه تمرینی شخصی، ارتباط مستقیم با مربی و دیدن پیشرفت واقعی در هر روز.
+          <p className="mb-8 max-w-xl text-[15px] leading-relaxed text-muted-foreground md:text-lg">
+            فضایی امن، دلنشین و اختصاصی برای بانوان. برنامه‌های تمرینی شخصی‌سازی شده با مربی حرفه‌ای، ثبت وضعیت سلامت و تجربه حس سرزندگی در هر روز.
           </p>
 
-          <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-start">
-            <CtaButton onClick={onLogin} className="w-full whitespace-nowrap sm:w-auto sm:min-w-40">
-              <Heart className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              ورود اعضا
-            </CtaButton>
-            <CtaButton onClick={onRegister} variant="orange" className="w-full whitespace-nowrap sm:w-auto sm:min-w-40">
+          <div className="flex flex-col items-stretch gap-3.5 sm:flex-row sm:items-center sm:justify-start">
+            <CtaButton onClick={onRegister} className="w-full whitespace-nowrap sm:w-auto sm:min-w-44">
               <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              عضویت ورزشکار یا مربی
+              شروع عضویت رایگان
             </CtaButton>
+            <CtaButton onClick={onLogin} variant="outline" className="w-full whitespace-nowrap sm:w-auto sm:min-w-36">
+              <Heart className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              ورود اعضا و مربیان
+            </CtaButton>
+          </div>
+
+          {/* Social proof indicators */}
+          <div className="mt-10 flex flex-wrap items-center gap-6 border-t border-border/70 pt-6 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <div className="flex -space-x-2 space-x-reverse">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-blush/20 text-[10px] font-bold text-blush">م‌ا</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-primary/20 text-[10px] font-bold text-primary">س‌ر</span>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-secondary text-[10px] font-bold text-foreground">ن‌ک</span>
+              </div>
+              <span className="font-medium text-foreground">+۴۵۰ ورزشکار فعال</span>
+            </div>
+            <div className="h-3.5 w-px bg-border" />
+            <div className="flex items-center gap-1.5">
+              <Star className="h-4 w-4 fill-primary text-primary" strokeWidth={1.5} />
+              <span className="font-semibold text-foreground">۴.۹</span>
+              <span>رضایت اعضا</span>
+            </div>
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[30rem]">
-          {/* Soft blush radial glow behind the dark-signature hero card (both themes) */}
-          <div aria-hidden="true" className="pointer-events-none absolute -inset-10 rounded-full bg-blush-fixed/15 blur-3xl" />
-          {/* Reference hero card: GymBackdrop + content overlay */}
-          <div className="relative overflow-hidden rounded-[26px] border border-logo-ink-inverse/10 shadow-2xl shadow-scrim/50">
-            <div className="h-[380px] w-full">
-              <GymBackdrop />
-            </div>
-            <div className="absolute inset-0 flex flex-col justify-between p-6 md:p-8">
-              <div>
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cream-fixed">
-                  امروز، یک قدم جلوتر
+        {/* Hero showcase card */}
+        <div className="relative mx-auto w-full max-w-[28rem] lg:max-w-[30rem]">
+          {/* Subtle soft ambient glow */}
+          <div aria-hidden="true" className="pointer-events-none absolute -inset-6 rounded-[36px] bg-gradient-to-tr from-blush/20 via-primary/10 to-transparent blur-2xl" />
+
+          {/* Main glass card */}
+          <div className="relative overflow-hidden rounded-[28px] border border-border/80 bg-card/85 p-6 shadow-2xl backdrop-blur-xl sm:p-7">
+            {/* Header info */}
+            <div className="flex items-start justify-between gap-4 border-b border-border/70 pb-5">
+              <div className="text-right">
+                <span className="text-[11px] font-semibold tracking-wider text-primary">
+                  امروز · برنامه اختصاصی شما
+                </span>
+                <h3 className="mt-1 font-serif text-xl font-normal text-foreground">
+                  پیلاتس و تقویت عضلات میان‌تنه
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  همراه با مربی مهسا احمدی · استودیو ۲
                 </p>
-                <p className="mt-2 font-serif text-4xl font-medium text-logo-ink-inverse" dir="ltr">78%</p>
-                <p className="mt-1 text-xs text-logo-ink-inverse/70">فعالیت روزانه تکمیل شده</p>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                {[
-                  ["حرکت", "380 کالری"],
-                  ["تمرین", "42 دقیقه"],
-                  ["تداوم", "5 روز"],
-                ].map(([label, value]) => (
-                  <div key={label} className="rounded-2xl border border-logo-ink-inverse/10 bg-scrim/30 p-3 backdrop-blur-sm">
-                    <span className="mb-2 block h-1.5 w-6 rounded-full bg-primary" />
-                    <p className="text-xs text-logo-ink-inverse/70">{label}</p>
-                    <p className="mt-1 text-xs font-bold text-logo-ink-inverse">{value}</p>
-                  </div>
-                ))}
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-blush/30 bg-blush/10 text-blush">
+                <Activity className="h-5 w-5" strokeWidth={1.75} />
+              </span>
+            </div>
+
+            {/* Daily progress summary */}
+            <div className="my-5 rounded-2xl border border-border/60 bg-secondary/40 p-4 text-right">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-muted-foreground">میزان پیشرفت روزانه</span>
+                <span className="font-serif text-lg font-semibold text-blush" dir="ltr">78%</span>
               </div>
+              <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-border">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-primary via-blush-solid to-blush transition-all duration-500"
+                  style={{ width: "78%" }}
+                />
+              </div>
+            </div>
+
+            {/* Metrics grid */}
+            <div className="grid grid-cols-3 gap-2.5">
+              {[
+                { label: "کالری فعال", value: "۳۸۰", unit: "کالری", color: "bg-blush" },
+                { label: "مدت تمرین", value: "۴۲", unit: "دقیقه", color: "bg-primary" },
+                { label: "تداوم زنجیره", value: "۵", unit: "روز", color: "bg-emerald-500" },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="rounded-2xl border border-border/60 bg-card/60 p-3 text-right backdrop-blur-sm transition-transform hover:-translate-y-0.5"
+                >
+                  <span className={`mb-2 block h-1.5 w-5 rounded-full ${item.color}`} />
+                  <p className="text-[11px] text-muted-foreground">{item.label}</p>
+                  <p className="mt-1 font-serif text-sm font-semibold text-foreground">
+                    {item.value} <span className="text-[10px] font-normal text-muted-foreground">{item.unit}</span>
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Coach quote badge */}
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-border/60 bg-secondary/30 p-3.5">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary">
+                م
+              </span>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                «تمرین امروز متناسب با سطح انرژی و آمادگی بدنی شما طراحی شده است.»
+              </p>
             </div>
           </div>
-          <div className="absolute -bottom-6 -right-4 rounded-2xl border border-border bg-card px-4 py-3 text-right shadow-2xl shadow-scrim/50">
-            <p className="text-xs text-muted-foreground">همراه با مربی</p>
-            <p className="mt-1 text-xs font-bold text-foreground">برنامه اختصاصی تو</p>
+
+          {/* Floating pill badge */}
+          <div className="absolute -bottom-4 -right-3 flex items-center gap-2.5 rounded-2xl border border-border bg-card px-4 py-2.5 shadow-xl backdrop-blur-md">
+            <CheckCircle2 className="h-4 w-4 text-emerald-500" strokeWidth={2} />
+            <div className="text-right">
+              <p className="text-[10px] text-muted-foreground">پایش هوشمند</p>
+              <p className="text-xs font-bold text-foreground">ثبت خودکار حضور</p>
+            </div>
           </div>
         </div>
       </div>
-      <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce">
-        <ChevronDown className="h-6 w-6 text-muted-foreground/40" strokeWidth={1.75} />
+
+      <div className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 animate-bounce">
+        <a href="#experience" aria-label="مشاهده بخش امکانات" className="text-muted-foreground/60 transition-colors hover:text-foreground">
+          <ChevronDown className="h-5 w-5" strokeWidth={1.75} />
+        </a>
       </div>
     </section>
   );
