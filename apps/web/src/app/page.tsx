@@ -213,8 +213,7 @@ function HeroSection({ onLogin, onRegister }: { onLogin: () => void; onRegister:
         <div className="text-right">
           {/* Tag pill */}
           <div className="mb-6 inline-flex max-w-full items-center gap-2.5 rounded-full border border-blush/25 bg-blush/10 px-4 py-1.5 text-xs font-medium text-blush backdrop-blur-md">
-            <span className="flex h-2 w-2 rounded-full bg-blush animate-pulse" aria-hidden />
-            <Sparkles className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} aria-hidden />
+            <span className="flex h-2 w-2 rounded-full bg-blush animate-pulse" aria-hidden="true" />
             <span>استودیو دیجیتال تندرستی و تمرین بانوان</span>
           </div>
 
@@ -230,14 +229,37 @@ function HeroSection({ onLogin, onRegister }: { onLogin: () => void; onRegister:
           </p>
 
           <div className="flex flex-col items-stretch gap-3.5 sm:flex-row sm:items-center sm:justify-start">
-            <CtaButton onClick={onRegister} className="w-full whitespace-nowrap sm:w-auto sm:min-w-44">
-              <Sparkles className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              شروع عضویت رایگان
-            </CtaButton>
-            <CtaButton onClick={onLogin} variant="outline" className="w-full whitespace-nowrap sm:w-auto sm:min-w-36">
-              <Heart className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              ورود اعضا و مربیان
-            </CtaButton>
+            {/* Primary Action: Membership & Registration */}
+            <button
+              type="button"
+              onClick={onRegister}
+              className="group relative inline-flex items-center justify-center gap-2.5 overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-[#967347] to-blush px-7 py-3.5 font-sans text-sm font-semibold tracking-normal text-white shadow-lg shadow-primary/25 transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-xl hover:shadow-primary/35 active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 cursor-pointer w-full sm:w-auto"
+            >
+              {/* Functional Shimmer Light Sweep Effect */}
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition-transform duration-1000 ease-out group-hover:translate-x-full"
+              />
+              <span className="relative z-10 flex items-center gap-2">
+                <span>ثبت‌نام و عضویت باشگاه</span>
+                <ArrowLeft
+                  className="h-4 w-4 transition-transform duration-300 ease-out group-hover:-translate-x-1"
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
+              </span>
+            </button>
+
+            {/* Secondary Action: Member & Coach Login */}
+            <button
+              type="button"
+              onClick={onLogin}
+              className="group relative inline-flex items-center justify-center gap-2 rounded-2xl border border-border/80 bg-card/80 px-6 py-3.5 font-sans text-sm font-medium tracking-normal text-foreground backdrop-blur-md transition-all duration-300 ease-out hover:-translate-y-0.5 hover:border-primary/50 hover:bg-secondary/70 hover:text-foreground hover:shadow-md active:translate-y-0 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 cursor-pointer w-full sm:w-auto"
+            >
+              <span className="flex items-center gap-2">
+                <span>ورود اعضا و مربیان</span>
+              </span>
+            </button>
           </div>
 
           {/* Social proof indicators */}

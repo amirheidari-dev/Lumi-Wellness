@@ -25,7 +25,7 @@ export function CtaButton({ variant = "cream", className, children, ...rest }: C
   return (
     <button
       className={cn(
-        "flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-bold tracking-wide shadow-lg shadow-scrim/40 transition-all duration-150 ease-out hover:scale-[1.02] active:scale-[0.96] motion-reduce:transition-colors motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
+        "flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-3 text-xs font-bold tracking-normal shadow-lg shadow-scrim/40 transition-all duration-150 ease-out hover:scale-[1.02] active:scale-[0.96] motion-reduce:transition-colors motion-reduce:hover:scale-100 motion-reduce:active:scale-100",
         variant === "cream" && "bg-primary text-primary-foreground hover:bg-primary",
         variant === "orange" && "bg-cta text-logo-ink-inverse shadow-cta/20 hover:bg-cta",
         variant === "ghost" && "bg-card text-foreground shadow-none hover:bg-secondary",

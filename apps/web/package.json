@@ -10,7 +10,7 @@
     "not op_mini all"
   ],
   "scripts": {
-    "dev": "next dev",
+    "dev": "NEXT_PUBLIC_USE_MOCKS=true next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "ESLINT_USE_FLAT_CONFIG=true eslint .",
