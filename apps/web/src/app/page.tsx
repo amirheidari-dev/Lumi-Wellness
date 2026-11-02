@@ -98,7 +98,7 @@ function LandingNavigation() {
           </Link>
           <Link
             href="/auth/register"
-            className="group relative inline-flex cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-l from-primary via-[#967347] to-blush px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-primary/20 transition-all duration-200 hover:shadow-md hover:shadow-primary/30 active:scale-[0.98]"
+            className="group relative inline-flex cursor-pointer items-center justify-center gap-1.5 overflow-hidden rounded-xl bg-gradient-to-l from-blush via-blush-solid to-blush px-4 py-2 text-xs font-semibold text-white shadow-sm shadow-blush/25 transition-all duration-200 hover:shadow-md hover:shadow-blush/40 active:scale-[0.98]"
           >
             <span>شروع عضویت</span>
             <ArrowLeft className="h-3.5 w-3.5 transition-transform duration-200 group-hover:-translate-x-0.5" />
@@ -196,7 +196,7 @@ function HeroSection() {
           <div className="flex flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-start">
             <Link
               href="/auth/register"
-              className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-l from-primary via-[#967347] to-blush px-6 py-3 font-sans text-sm font-semibold tracking-normal text-white shadow-md shadow-primary/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30 active:scale-[0.98] w-full sm:w-auto text-center"
+              className="group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-l from-blush via-blush-solid to-blush px-6 py-3 font-sans text-sm font-semibold tracking-normal text-white shadow-md shadow-blush/25 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blush/40 active:scale-[0.98] w-full sm:w-auto text-center"
             >
               <span>ثبت‌نام و عضویت باشگاه</span>
               <ArrowLeft
@@ -805,7 +805,7 @@ function MembershipsSection() {
               }`}
             >
               {tier.popular && (
-                <span className="absolute -top-3 right-5 rounded-full bg-gradient-to-l from-primary to-blush px-3 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                <span className="absolute -top-3 right-5 rounded-full bg-gradient-to-l from-blush to-blush-solid px-3 py-0.5 text-[10px] font-bold text-white shadow-sm">
                   پیشنهاد ویژه اعضا
                 </span>
               )}
@@ -834,7 +834,7 @@ function MembershipsSection() {
                   href="/auth/register"
                   className={`block w-full text-center rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
                     tier.popular
-                      ? "bg-gradient-to-l from-primary via-[#967347] to-blush text-white shadow-md shadow-primary/20 hover:brightness-110 active:scale-[0.98]"
+                      ? "bg-gradient-to-l from-blush via-blush-solid to-blush text-white shadow-md shadow-blush/25 hover:brightness-110 active:scale-[0.98]"
                       : "border border-border bg-secondary/50 text-foreground hover:bg-secondary active:scale-[0.98]"
                   }`}
                 >
